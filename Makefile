@@ -168,6 +168,8 @@ run: build-image
 	echo "==> running on port $$port (ctrl-c to stop)"; \
 	docker run --rm -p $$port:$$port "$$@" --name $(CONTAINER) $(IMAGE)
 
-# Apps override this target with their own test command; the template has none.
+# Smoke test: spawns the server directly (no Docker) and drives it over HTTP —
+# post -> list -> the 400 cases, per APP_SPEC.md's quality bar.
 test:
-	@echo "no test command defined for this app — override the 'test' target in this Makefile if your app has one → see docs/example.md"
+	@echo "==> smoke test"
+	@node test/smoke.js

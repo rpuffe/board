@@ -2,13 +2,10 @@
 # The only file in this repo with app-specific infra facts. Every field here
 # exists because a real deploy needed it — no speculative fields, no `image`
 # (CI computes and injects the image reference per build; apps never pin one).
-name: my-app        # dns-safe service name; becomes service/log/target-group names
-                     # and the URL host (https://<name>.fd.robertpuffe.com).
-                     # must match ^[a-z][a-z0-9-]{0,19}$ (lowercase, starts with
-                     # a letter, hyphens ok, max 20 chars)
+name: board          # dns-safe service name; https://board.fd.robertpuffe.com
 port: 8080           # port the container listens on
 healthcheck: /healthz  # HTTP path; must return 200 within 30s of container start
 cpu: 256             # Fargate CPU units (valid cpu/memory pairs enforced by
-memory: 512          # app-manifest.schema.json — 256/512 fits most demo apps)
+memory: 512          # app-manifest.schema.json — 256/512 fits this demo app)
 env:                 # non-secret config only — NO secrets, tokens, or credentials
-  LOG_LEVEL: info    # here; v1 has no secret support (see docs/contract.md)
+  BOARD_TITLE: message board   # page heading; defaults to "message board" if unset

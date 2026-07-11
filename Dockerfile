@@ -1,22 +1,25 @@
-# Placeholder — replace with your app's Dockerfile. Contract: linux/amd64,
-# listen on the manifest port, answer the manifest healthcheck with 200
-# within 30s, log to stdout, run unprivileged.
-#
-# nginx-unprivileged already runs as a non-root user and listens on 8080,
-# matching this template's app-manifest.yaml (port: 8080, healthcheck: /healthz).
-FROM nginxinc/nginx-unprivileged:alpine
+# board — zero-dependency Node.js API + static page, built-ins only.
+FROM node:22-alpine
 
-# Build-time writes need root; the base image's default user can't write here.
-USER root
 # apk upgrade: official base images lag CVE fixes by days, and the Trivy gate
-# fails on fixable HIGH/CRITICAL vulns (it caught CVE-2026-33630 in c-ares in
-# a current image). Keep this line — it's what "current base image" means.
-RUN apk upgrade --no-cache \
-    && echo "ok" > /usr/share/nginx/html/healthz \
-    && echo "hello from flightdeck" > /usr/share/nginx/html/index.html
+# fails on fixable HIGH/CRITICAL vulns even in a current image.
+RUN apk upgrade --no-cache
 
-# Explicit non-root user: the Trivy gate (DS002, HIGH) checks the Dockerfile
-# itself and can't see that the base image already switches users.
-USER nginx
+# The app has zero npm dependencies but the base image still bundles npm,
+# npx, and corepack — each carries its own CVEs, independent of app deps.
+# Strip them from the runtime image; nothing at runtime invokes them.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+    && rm -rf /opt/yarn*
+
+WORKDIR /app
+COPY server.js ./
+
+# node:22-alpine already ships a non-root "node" user; declare it explicitly
+# anyway — Trivy's Dockerfile check (DS002, HIGH) inspects the Dockerfile
+# itself, not the base image's runtime user.
+USER node
 
 EXPOSE 8080
+
+CMD ["node", "server.js"]
