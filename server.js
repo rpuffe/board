@@ -282,3 +282,5 @@ if (require.main === module) {
 }
 
 module.exports = server;
+
+// pipeline verification: PR-checks trigger test
